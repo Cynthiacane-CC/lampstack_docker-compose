@@ -1,0 +1,70 @@
+#https://mariadb.com/kb/en/setting-up-a-lamp-stack-with-docker-compose/
+#https://github.com/sprintcube/docker-compose-lamp/blob/master/sample.env
+#https://www.youtube.com/watch?v=MTeY3npy1gU
+
+#https://mariadb.com/kb/en/setting-up-a-lamp-stack-with-docker-compose/
+#https://github.com/sprintcube/docker-compose-lamp/blob/master/sample.env
+#https://www.youtube.com/watch?v=MTeY3npy1gU
+
+version: "3"
+services:
+  web:
+      #image: "php:7.4-apache"
+      build: .
+      volumes:
+        - ./web:/var/www/html
+        - ./web/config:/etc/apache2/sites-enabled
+        - ./web/logs:/var/log/apache2
+        - ./web/logs_xdebug:/var/log/xdebug
+      ports:
+          - 85:80 
+      depends_on: 
+        - db
+      links:   
+        - db
+  db:
+      image: "mysql"
+      restart: always
+      environment:
+        MYSQL_ROOT_PASSWORD: "${MYSQL_ROOT_PASSWORD}"
+        MYSQL_DATABASE: "${MYSQL_DATABASE}"
+        MYSQL_USER: "${MYSQL_USER}"
+        MYSQL_PASSWORD: "${MYSQL_PASSWORD}"
+      volumes:
+        - ./mysql/db_vol:/var/lib/mysql
+        - ./mysql/initdb/:/docker-entrypoint-initdb.d
+      ports:
+        - "3306:3306"
+  
+  phpmyadmin:
+      image: "phpmyadmin"
+      restart: always
+      links:
+        - db
+      environment:
+        PMA_HOST: db
+        PMA_PORT: 3306
+        PMA_USER: root
+        PMA_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+        MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+        MYSQL_USER: ${MYSQL_USER}
+        MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+         #- PMA_ARBITRARY=1
+        UPLOAD_LIMIT: ${UPLOAD_LIMIT}
+        MEMORY_LIMIT: ${MEMORY_LIMIT}
+      ports:
+        - "8080:80"
+      volumes:
+        - ./php/config:/usr/local/etc/php/conf.d/php-phpmyadmin.ini
+
+#PMA_ARBITRARY=1: then you will be given the opportunity to enter the host server manually on the login screen. Enter the name of the database service there. In your case the name of the service is db
+
+#create a .env file
+#mysql database
+MYSQL_ROOT_PASSWORD=school
+MYSQL_DATABASE=lamp
+MYSQL_USER=admin
+MYSQL_PASSWORD=admin1
+#Phpmyadmin
+UPLOAD_LIMIT=512M
+MEMORY_LIMIT=512M
